@@ -1,0 +1,46 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "chrome",
+        "request": "launch",
+        "name": "client launch: chrome",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}",
+        "sourceMapPathOverrides": {
+          "webpack:///*": "${workspaceRoot}/*"
+        }
+      },
+      {
+        "type": "chrome",
+        "request": "attach",
+        "name": "client attach: chrome",
+        "urlFilter": "http://localhost:3000*",
+        "webRoot": "${workspaceFolder}",
+        "sourceMapPathOverrides": {
+          "webpack:///*": "${workspaceRoot}/*"
+        },
+        "port": 9222
+      },
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "server launch: node",
+        "runtimeExecutable": "npm",
+        "windows": {
+          "runtimeExecutable": "npm.cmd"
+        },
+        "runtimeArgs": [
+          "run",
+          "dev"
+        ],
+        "port": 9229
+      },
+      {
+        "type": "node",
+        "request": "attach",
+        "name": "server attach: node",
+        "port": 9229
+      }
+    ]
+  }
