@@ -1,5 +1,4 @@
 const http = require('http')
-const path = require('path')
 
 const express = require('express')
 const consola = require('consola')
@@ -12,7 +11,7 @@ const server = http.createServer(app)
 const io = socketio(server)
 
 // set static folder
-app.use(express.static(path.join(__dirname, 'public')))
+app.use(express.static('public'))
 
 // the time at which unreliable messages will collapse and queue and then fire.
 const BURST_DELAY = 50 // ms, 20 tickrate
