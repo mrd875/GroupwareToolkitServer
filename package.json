@@ -7,7 +7,8 @@
     "dev": "cross-env NODE_ENV=development nodemon --inspect src/index.js --watch src",
     "start": "cross-env NODE_ENV=production node src/index.js",
     "lint": "eslint --ext .js --ignore-path .gitignore .",
-    "format": "eslint --fix --ext .js --ignore-path .gitignore ."
+    "format": "eslint --fix --ext .js --ignore-path .gitignore .",
+    "test": "exit 0"
   },
   "repository": {
     "type": "git",
