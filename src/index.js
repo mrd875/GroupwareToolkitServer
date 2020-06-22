@@ -84,8 +84,10 @@ app.get('/clear', (req, res) => {
 io.on('connection', socket => {
   consola.log(`${socket.id} has connected.`)
 
+  // set the socket's state to just connected.
   socket.conn_state = CONN_STATES.CONNECTED
 
+  // when we receive an auth packet.
   socket.on('auth', (authPayload) => {
     consola.log(`${socket.id} send auth: ${authPayload}`)
 
@@ -120,11 +122,13 @@ io.on('connection', socket => {
     }
     const userObj = users[id]
 
+    // make sure the user isn't already online.
     if (userObj.online) {
       socket.error({ message: 'id is already online', type: 'auth' })
       return
     }
 
+    // auth the socket.
     socket.auth_id = id
     userObj.online = true
     socket.conn_state = CONN_STATES.AUTHED
@@ -135,6 +139,8 @@ io.on('connection', socket => {
     socket.emit('authed', userObj)
   })
 
+
+  // when a user wants to join a room
   socket.on('join', (joinPayload, userPayload) => {
     consola.log(`${socket.id} is joining room: ${joinPayload}, ${userPayload}`)
 
