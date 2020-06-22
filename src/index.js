@@ -144,17 +144,18 @@ io.on('connection', socket => {
   socket.on('join', (joinPayload, userPayload) => {
     consola.log(`${socket.id} is joining room: ${joinPayload}, ${userPayload}`)
 
+    // check to see if the user can send this type of packet.
     if (socket.conn_state !== CONN_STATES.AUTHED) {
       socket.error({ type: 'join', message: 'Need to be in the AUTHED state to send this type of packet' })
       return
     }
 
+    // validate join obj
     if (typeof joinPayload !== 'object') {
       socket.error({ type: 'join', message: 'Join packet was not an object' })
       return
     }
 
-    // validate join obj
     const room = joinPayload.room
     if (typeof room !== 'string') {
       socket.error({ type: 'join', message: 'No \'room\' in join packet' })
@@ -189,9 +190,11 @@ io.on('connection', socket => {
     })
   })
 
+  // when the user sends us a leave room packet.
   socket.on('leaveroom', () => {
     consola.log(`${socket.id} is leaving room`)
 
+    // see if the user can send this type of packet.
     if (socket.conn_state !== CONN_STATES.INROOM) {
       socket.error({ type: 'leaveroom', message: 'Need to be in the INROOM state to send this type of packet' })
       return
@@ -202,6 +205,7 @@ io.on('connection', socket => {
 
     const room = userObj.room
 
+    // leave the room.
     socket.leave(room, () => {
       io.to(room).emit('disconnected', id, 'left')
       userObj.room = undefined
@@ -341,16 +345,21 @@ io.on('connection', socket => {
     onStateUpdate(e, 'state_updated_reliable')
   })
 
+  // when the user disconnects.
   socket.once('disconnect', reason => {
     consola.log(`${socket.id} has disconnected (${reason}).`)
 
+    // check if the user is authed.
     if (socket.conn_state !== CONN_STATES.CONNECTED) {
       const id = socket.auth_id
       const userObj = users[id]
 
+      // make the user offline.
       userObj.online = false
 
+      // check if they were in a room
       if (socket.conn_state === CONN_STATES.INROOM) {
+        // tell everyone they left the room.
         const room = userObj.room
 
         io.to(room).emit('disconnected', id, reason)
