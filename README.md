@@ -26,4 +26,4 @@ The server is completely independent of client logic and is only keeping a colle
 
 ## Usage
 
-This is just the server and is designed to just be ran somewhere. Once you got the server running, use the client (https://github.com/mrd875/GroupwareToolkitClient) to start using the project.
+This is just the server and is designed to just be ran somewhere. Once you got the server running, use the client (https://github.com/mrd875/GroupwareToolkitClient) to start using GT.
