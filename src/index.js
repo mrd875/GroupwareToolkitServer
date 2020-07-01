@@ -89,7 +89,7 @@ io.on('connection', socket => {
 
   // when we receive an auth packet.
   socket.on('auth', (authPayload) => {
-    consola.log(`${socket.id} send auth: ${authPayload}`)
+    consola.log(`${socket.id} send auth: `, authPayload)
 
     // check and see if the socket is in the correct state to send this type of packet
     if (socket.conn_state !== CONN_STATES.CONNECTED) {
@@ -139,10 +139,9 @@ io.on('connection', socket => {
     socket.emit('authed', userObj)
   })
 
-
   // when a user wants to join a room
   socket.on('join', (joinPayload, userPayload) => {
-    consola.log(`${socket.id} is joining room: ${joinPayload}, ${userPayload}`)
+    consola.log(`${socket.id} is joining room:`, joinPayload, userPayload)
 
     // check to see if the user can send this type of packet.
     if (socket.conn_state !== CONN_STATES.AUTHED) {
@@ -182,6 +181,8 @@ io.on('connection', socket => {
       userObj.room = room
       socket.conn_state = CONN_STATES.INROOM
 
+      consola.log(`${socket.id} joined room ${room}`)
+
       // tell everyone someone connected
       io.to(room).emit('connected', id, userObj.state)
 
@@ -207,6 +208,8 @@ io.on('connection', socket => {
 
     // leave the room.
     socket.leave(room, () => {
+      consola.log(`${socket.id} left room`)
+
       io.to(room).emit('disconnected', id, 'left')
       userObj.room = undefined
 
