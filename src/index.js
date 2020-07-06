@@ -183,11 +183,11 @@ io.on('connection', socket => {
 
       consola.log(`${socket.id} joined room ${room}`)
 
-      // tell everyone someone connected
-      io.to(room).emit('connected', id, userObj.state)
-
       // notify new user of the current state...
       socket.emit('joined', room, roomObj.state, getUsersFromRoom(room))
+
+      // tell everyone someone connected
+      io.to(room).emit('connected', id, userObj.state)
     })
   })
 
