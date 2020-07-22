@@ -165,7 +165,10 @@ io.on('connection', socket => {
     const userObj = users[id]
 
     // apply the user payload from the user
-    if (userPayload !== undefined && userPayload !== null && typeof userPayload === 'object') userObj.state = userPayload
+    if (userPayload !== undefined && userPayload !== null && typeof userPayload === 'object' && !Array.isArray(userPayload))
+      userObj.state = userPayload
+      else
+    consola.warn('Bad user payload')
 
     // have the socket join the room
     socket.join(room, () => {
