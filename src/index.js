@@ -39,6 +39,11 @@ const removeObjectsWithNull = obj => {
     .value() // get value
 }
 
+// return true if the object is an object.
+const isObject = obj => {
+  return obj !== undefined && obj !== null && typeof obj === 'object' && !Array.isArray(obj)
+}
+
 // returns all users for the given room.
 // key'd by userId, value being the user's state.
 const getUsersFromRoom = room => {
@@ -80,6 +85,16 @@ app.get('/clear', (req, res) => {
   res.sendStatus(200)
 })
 
+const validPackets = {
+  user_updated_reliable: true,
+  user_updated_unreliable: true,
+  state_updated_unreliable: true,
+  state_updated_reliable: true,
+  leaveroom: true,
+  join: true,
+  auth: true
+}
+
 // listen for a connection.
 io.on('connection', socket => {
   consola.log(`${socket.id} has connected.`)
@@ -89,8 +104,6 @@ io.on('connection', socket => {
 
   // when we receive an auth packet.
   socket.on('auth', (authPayload) => {
-    consola.log(`${socket.id} send auth: `, authPayload)
-
     // check and see if the socket is in the correct state to send this type of packet
     if (socket.conn_state !== CONN_STATES.CONNECTED) {
       socket.error({
@@ -101,10 +114,11 @@ io.on('connection', socket => {
     }
 
     // ok got auth packet, validate it and move on..
-    if (typeof authPayload !== 'object') {
+    if (!isObject(authPayload)) {
       socket.error({ message: 'Auth packet was not an object', type: 'auth' })
       return
     }
+
     const id = authPayload.id
     if (typeof id !== 'string') {
       socket.error({ message: 'No valid \'id\' found in auth packet', type: 'auth' })
@@ -141,8 +155,6 @@ io.on('connection', socket => {
 
   // when a user wants to join a room
   socket.on('join', (joinPayload, userPayload) => {
-    consola.log(`${socket.id} is joining room:`, joinPayload, userPayload)
-
     // check to see if the user can send this type of packet.
     if (socket.conn_state !== CONN_STATES.AUTHED) {
       socket.error({ type: 'join', message: 'Need to be in the AUTHED state to send this type of packet' })
@@ -150,7 +162,7 @@ io.on('connection', socket => {
     }
 
     // validate join obj
-    if (typeof joinPayload !== 'object') {
+    if (!isObject(joinPayload)) {
       socket.error({ type: 'join', message: 'Join packet was not an object' })
       return
     }
@@ -165,7 +177,7 @@ io.on('connection', socket => {
     const userObj = users[id]
 
     // apply the user payload from the user
-    if (userPayload !== undefined && userPayload !== null && typeof userPayload === 'object' && !Array.isArray(userPayload)) { userObj.state = userPayload } else { consola.warn('Bad user payload') }
+    if (isObject(userPayload)) userObj.state = userPayload
 
     // have the socket join the room
     socket.join(room, () => {
@@ -193,8 +205,6 @@ io.on('connection', socket => {
 
   // when the user sends us a leave room packet.
   socket.on('leaveroom', () => {
-    consola.log(`${socket.id} is leaving room`)
-
     // see if the user can send this type of packet.
     if (socket.conn_state !== CONN_STATES.INROOM) {
       socket.error({ type: 'leaveroom', message: 'Need to be in the INROOM state to send this type of packet' })
@@ -221,7 +231,7 @@ io.on('connection', socket => {
 
   const onUserUpdate = (e, msg) => {
     if (socket.conn_state !== CONN_STATES.INROOM) { socket.error({ type: 'update_user', message: 'You need to be in a room' }); return }
-    if (typeof e !== 'object') { socket.error({ type: 'update_user', message: 'Update payload needs to be an object' }); return }
+    if (!isObject(e)) { socket.error({ type: 'update_user', message: 'Update payload needs to be an object' }); return }
 
     if (msg === 'user_updated_unreliable') {
       // check if the burst is locked
@@ -240,8 +250,6 @@ io.on('connection', socket => {
     const id = socket.auth_id
     const userObj = users[id]
     const room = userObj.room
-
-    consola.log('Got a', msg, 'from', socket.id, 'in', room, 'being', e)
 
     const sendAndLock = payloadDelta => {
       if (!payloadDelta) {
@@ -285,7 +293,7 @@ io.on('connection', socket => {
 
   const onStateUpdate = (e, msg) => {
     if (socket.conn_state !== CONN_STATES.INROOM) { socket.error({ type: 'update_state', message: 'You need to be in a room' }); return }
-    if (typeof e !== 'object') { socket.error({ type: 'update_state', message: 'Update payload needs to be an object' }); return }
+    if (!isObject(e)) { socket.error({ type: 'update_state', message: 'Update payload needs to be an object' }); return }
 
     if (msg === 'state_updated_unreliable') {
       // check if the burst is locked
@@ -305,8 +313,6 @@ io.on('connection', socket => {
     const userObj = users[id]
     const room = userObj.room
     const roomObj = rooms[room]
-
-    consola.log('Got a', msg, 'from', id, 'in', room, 'being', e)
 
     const sendAndLock = payloadDelta => {
       if (!payloadDelta) {
@@ -346,6 +352,20 @@ io.on('connection', socket => {
 
   socket.on('state_updated_reliable', e => {
     onStateUpdate(e, 'state_updated_reliable')
+  })
+
+  // middleware..
+  socket.use((packet, next) => {
+    const [pType, ...args] = packet
+
+    if (!(pType in validPackets)) {
+      socket.error({ type: 'packet', message: 'invalid packet type' })
+      consola.warn('Bad packet type:', pType)
+      return
+    }
+
+    consola.log(pType, args)
+    return next()
   })
 
   // when the user disconnects.
