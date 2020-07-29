@@ -6,13 +6,13 @@ const consola = require('consola')
 const servUrl = 'http://localhost:3000'
 
 describe('Server testing', () => {
-  before(done => {
+  before(function (done) {
     this.server = io.listen(3000)
     consola.log('Server listening...')
     done()
   })
 
-  after(done => {
+  after(function (done) {
     consola.log('Closing server...')
     this.server.close()
     done()
