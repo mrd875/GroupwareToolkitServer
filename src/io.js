@@ -71,7 +71,7 @@ const getUsersFromRoom = room => {
 
 // listen for a connection.
 io.on('connection', socket => {
-  consola.log(`${socket.id} has connected.`)
+  consola.info(`${socket.id} has connected.`)
 
   // set the socket's state to just connected.
   socket.conn_state = CONN_STATES.CONNECTED
@@ -121,7 +121,7 @@ io.on('connection', socket => {
     userObj.online = true
     socket.conn_state = CONN_STATES.AUTHED
 
-    consola.log(`${socket.id} is authed as ${id}`)
+    consola.info(`${socket.id} is authed as ${id}`)
 
     // tell user that they are authed
     socket.emit('authed', userObj)
@@ -167,7 +167,7 @@ io.on('connection', socket => {
       userObj.room = room
       socket.conn_state = CONN_STATES.INROOM
 
-      consola.log(`${socket.id} joined room ${room}`)
+      consola.info(`${socket.id} joined room ${room}`)
 
       // notify new user of the current state...
       socket.emit('joined', room, roomObj.state, getUsersFromRoom(room))
@@ -192,7 +192,7 @@ io.on('connection', socket => {
 
     // leave the room.
     socket.leave(room, () => {
-      consola.log(`${socket.id} left room`)
+      consola.info(`${socket.id} left room`)
 
       io.to(room).emit('disconnected', id, 'left')
       userObj.room = undefined
@@ -334,17 +334,17 @@ io.on('connection', socket => {
 
     if (!(pType in validPackets)) {
       socket.error({ type: 'packet', message: 'invalid packet type' })
-      consola.warn('Bad packet type:', pType)
+      consola.log('Bad packet type:', pType)
       return
     }
 
-    consola.log(pType, args)
+    consola.info(pType, args)
     return next()
   })
 
   // when the user disconnects.
   socket.once('disconnect', reason => {
-    consola.log(`${socket.id} has disconnected (${reason}).`)
+    consola.info(`${socket.id} has disconnected (${reason}).`)
 
     // check if the user is authed.
     if (socket.conn_state !== CONN_STATES.CONNECTED) {

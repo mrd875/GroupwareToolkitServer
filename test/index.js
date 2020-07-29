@@ -8,12 +8,12 @@ const servUrl = 'http://localhost:3000'
 describe('Server testing', () => {
   before(function (done) {
     this.server = io.listen(3000)
-    consola.log('Server listening...')
+    consola.info('Server listening...')
     done()
   })
 
   after(function (done) {
-    consola.log('Closing server...')
+    consola.info('Closing server...')
     this.server.close()
     done()
   })
