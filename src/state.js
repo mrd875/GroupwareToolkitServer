@@ -19,6 +19,13 @@ try {
   const usersJsonText = fs.readFileSync(pathToUsers, 'utf-8')
   const usersJsonParsed = JSON.parse(usersJsonText)
 
+  // now we need to strip the session data as no one is currently online.
+  for (const k in usersJsonParsed) {
+    const user = usersJsonParsed[k]
+    user.online = false
+    user.room = undefined
+  }
+
   consola.log('Users json file loaded.')
   users = usersJsonParsed
 } catch (err) {
