@@ -27,6 +27,8 @@ const validPackets = {
   user_updated_unreliable: true,
   state_updated_unreliable: true,
   state_updated_reliable: true,
+  state_updated_batched: true,
+  user_updated_batched: true,
   leaveroom: true,
   join: true,
   auth: true
@@ -264,6 +266,41 @@ io.on('connection', socket => {
     onUserUpdate(e, 'user_updated_unreliable')
   })
 
+  socket.on('user_updated_batched', e => {
+    // e should be an array
+    // we will have the client do the rate limit, hopefully no one exploits this
+
+    if (socket.conn_state !== CONN_STATES.INROOM) { socket.error({ type: 'update_state', message: 'You need to be in a room' }); return }
+    if (!Array.isArray(e) || e.length <= 0) { socket.error({ type: 'update_state', message: 'Update payload needs to be an array' }); return }
+
+    // now we need to open up the array,
+    // each element should be a single message update.
+    for (const i in e) {
+      const msg = e[i]
+
+      if (!isObject(msg)) { socket.error({ type: 'update_user', message: 'Update payload needs to be an object' }); return }
+    }
+
+    // ok we vaildated the payload, now lets apply the changes in order.
+
+    const id = socket.auth_id
+    const userObj = users[id]
+    const room = userObj.room
+
+    for (const i in e) {
+      const msg = e[i]
+
+      // update our state
+      _.merge(userObj.state, msg)
+      // remove null keys...
+      userObj.state = removeObjectsWithNull(userObj.state)
+    }
+
+    // ok the state has been applied inorder.
+    // now propergate the message to everyone.
+    io.to(room).emit('user_updated_batched', id, e)
+  })
+
   const onStateUpdate = (e, msg) => {
     if (socket.conn_state !== CONN_STATES.INROOM) { socket.error({ type: 'update_state', message: 'You need to be in a room' }); return }
     if (!isObject(e)) { socket.error({ type: 'update_state', message: 'Update payload needs to be an object' }); return }
@@ -325,6 +362,42 @@ io.on('connection', socket => {
 
   socket.on('state_updated_reliable', e => {
     onStateUpdate(e, 'state_updated_reliable')
+  })
+
+  socket.on('state_updated_batched', e => {
+    // e should be an array
+    // we will have the client do the rate limit, hopefully no one exploits this
+
+    if (socket.conn_state !== CONN_STATES.INROOM) { socket.error({ type: 'update_state', message: 'You need to be in a room' }); return }
+    if (!Array.isArray(e) || e.length <= 0) { socket.error({ type: 'update_state', message: 'Update payload needs to be an array' }); return }
+
+    // now we need to open up the array,
+    // each element should be a single message update.
+    for (const i in e) {
+      const msg = e[i]
+
+      if (!isObject(msg)) { socket.error({ type: 'update_state', message: 'Update payload needs to be an object' }); return }
+    }
+
+    // ok we vaildated the payload, now lets apply the changes in order.
+
+    const id = socket.auth_id
+    const userObj = users[id]
+    const room = userObj.room
+    const roomObj = rooms[room]
+
+    for (const i in e) {
+      const msg = e[i]
+
+      // update our state
+      _.merge(roomObj.state, msg)
+      // remove null keys...
+      roomObj.state = removeObjectsWithNull(roomObj.state)
+    }
+
+    // ok the state has been applied inorder.
+    // now propergate the message to everyone.
+    io.to(room).emit('state_updated_batched', id, e)
   })
 
   // middleware..
