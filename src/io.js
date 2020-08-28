@@ -22,6 +22,7 @@ const CONN_STATES = {
 // key'd by room name, value being the room's state.
 const { rooms, users } = require('./state.js')
 
+// all the valid packets we can receive
 const validPackets = {
   user_updated_reliable: true,
   user_updated_unreliable: true,
