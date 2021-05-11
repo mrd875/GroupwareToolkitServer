@@ -24,7 +24,7 @@
   "dependencies": {
     "consola": "^2.12.2",
     "cross-env": "^7.0.2",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "socket.io": "^2.3.0"
   },
   "devDependencies": {
